@@ -1,0 +1,34 @@
+Various Powershell commands:
+
+AD - List all users Password expiration date:
+
+Get-ADUser -filter {Enabled -eq $True -and PasswordNeverExpires -eq $False} –Properties "DisplayName", "msDS-UserPasswordExpiryTimeComputed", "PasswordLastSet" | Select-Object -Property "Displayname",@{Name="ExpiryDate";Expression={[datetime]::FromFileTime($_."msDS-UserPasswordExpiryTimeComputed")}}, "PasswordLastSet" |ft Displayname, ExpiryDate, PasswordLastSet
+ 
+O365 - export all mailboxes to a csv 
+Get-Mailbox -ResultSize Unlimited |Select-Object DisplayName,ServerName,PrimarySmtpAddress, @{Name="EmailAddresses";Expression={$_.EmailAddresses |Where-Object {$_.PrefixString -ceq "smtp"} | ForEach-Object {$_.SmtpAddress}}}| Export-Csv smtp.csv -NoTypeInformation
+
+O365 - Set Full rights on a mailbox to another user
+Get-Mailbox -ResultSize Unlimited | Add-MailboxPermission -AccessRights FullAccess -Automapping $false -User darren.mace@welltok.com
+
+O365 - Change Room mailbox to show Subject instead of Username
+Set-CalendarProcessing -Identity <roomname> -DeleteSubject $False -AddOrganizerToSubject $False 
+Get-CalendarProcessing -Identity <roomname> | FL
+
+O365 - Set a calendar permissions
+Add-MailboxFolderPermission -Identity user1@domain.com:\calendar -user user2@domain.com -AccessRights Editor (or Reviewer)
+
+O-365 Shows all users of a calendar
+Get-MailboxFolderPermission -Identity john@contoso.com:\calendar |fl
+
+O365 Find all uses of domain name
+Get-MsolUser -DomainName “yourdomain.com”
+Get-Recipient | Where {$_.EmailAddresses -match “yourdomain.com”};
+
+O365 Show all members of Distribution group
+Get-DistributionGroupMember -Identity "Marketing USA"
+Export to csv
+Get-DistributionGroupMember -Identity "Marketing USA" | Select Name, DisplayName, PrimarySmtpAddress | Export-csv ./Marketing.csv
+
+
+O365 Add user as full delegate to resource room
+Add-MailboxPermission -Identity "oz@welltok.com" -User carla.lopez -AccessRights FullAccess -Automapping $false
